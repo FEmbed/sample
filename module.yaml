@@ -1,3 +1,4 @@
+name: app
 common:
     flags:
     - -mcpu=${mcu}
@@ -17,9 +18,15 @@ common:
     - -Wfloat-equal
     - -g3
     - -fstack-usage
+    - -ffreestanding
     macros:
+    - DEBUG
+    - USE_FULL_ASSERT
+    - TRACE
+    - OS_USE_TRACE_SEMIHOSTING_DEBUG
     - STM32F407xx
     - USE_HAL_DRIVER
+    - HSE_VALUE=8000000
 cxx:
     flags:
     - -Wabi
@@ -29,7 +36,13 @@ cxx:
     - -fno-threadsafe-statics
 linker:
     flags:
-    - --gc-sections
+    - -Xlinker --gc-sections
+    search_paths:
+    - ldscripts
+    script_files:
+    - libs.ld
+    - mem.ld
+    - sections.ld
 files:
     includes:
         user:
