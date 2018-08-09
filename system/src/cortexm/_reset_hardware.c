@@ -25,43 +25,35 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef BLINKLED_H_
-#define BLINKLED_H_
+// ----------------------------------------------------------------------------
+
+#include "cmsis_device.h"
 
 // ----------------------------------------------------------------------------
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpadded"
+extern void
+__attribute__((noreturn))
+NVIC_SystemReset(void);
 
-class BlinkLed
+// ----------------------------------------------------------------------------
+
+// Forward declarations
+
+void
+__reset_hardware(void);
+
+// ----------------------------------------------------------------------------
+
+// This is the default hardware reset routine; it can be
+// redefined in the application for more complex applications.
+//
+// Called from _exit().
+
+void
+__attribute__((weak,noreturn))
+__reset_hardware()
 {
-public:
-  BlinkLed (unsigned int port, unsigned int bit, bool active_low);
-
-  void
-  powerUp ();
-
-  void
-  turnOn ();
-
-  void
-  turnOff ();
-
-  void
-  toggle ();
-
-  bool
-  isOn ();
-
-private:
-  unsigned int fPortNumber;
-  unsigned int fBitNumber;
-  unsigned int fBitMask;
-  bool fIsActiveLow;
-};
-
-#pragma GCC diagnostic pop
+  NVIC_SystemReset();
+}
 
 // ----------------------------------------------------------------------------
-
-#endif // BLINKLED_H_

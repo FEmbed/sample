@@ -25,43 +25,74 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef BLINKLED_H_
-#define BLINKLED_H_
+// ----------------------------------------------------------------------------
+
+#if defined(TRACE)
+
+#include <stdio.h>
+#include <stdarg.h>
+#include "diag/Trace.h"
+#include "string.h"
+
+#ifndef OS_INTEGER_TRACE_PRINTF_TMP_ARRAY_SIZE
+#define OS_INTEGER_TRACE_PRINTF_TMP_ARRAY_SIZE (128)
+#endif
 
 // ----------------------------------------------------------------------------
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpadded"
-
-class BlinkLed
+int
+trace_printf(const char* format, ...)
 {
-public:
-  BlinkLed (unsigned int port, unsigned int bit, bool active_low);
+  int ret;
+  va_list ap;
 
-  void
-  powerUp ();
+  va_start (ap, format);
 
-  void
-  turnOn ();
+  // TODO: rewrite it to no longer use newlib, it is way too heavy
 
-  void
-  turnOff ();
+  static char buf[OS_INTEGER_TRACE_PRINTF_TMP_ARRAY_SIZE];
 
-  void
-  toggle ();
+  // Print to the local buffer
+  ret = vsnprintf (buf, sizeof(buf), format, ap);
+  if (ret > 0)
+    {
+      // Transfer the buffer to the device
+      ret = trace_write (buf, (size_t)ret);
+    }
 
-  bool
-  isOn ();
+  va_end (ap);
+  return ret;
+}
 
-private:
-  unsigned int fPortNumber;
-  unsigned int fBitNumber;
-  unsigned int fBitMask;
-  bool fIsActiveLow;
-};
+int
+trace_puts(const char *s)
+{
+  trace_write(s, strlen(s));
+  return trace_write("\n", 1);
+}
 
-#pragma GCC diagnostic pop
+int
+trace_putchar(int c)
+{
+  trace_write((const char*)&c, 1);
+  return c;
+}
+
+void
+trace_dump_args(int argc, char* argv[])
+{
+  trace_printf("main(argc=%d, argv=[", argc);
+  for (int i = 0; i < argc; ++i)
+    {
+      if (i != 0)
+        {
+          trace_printf(", ");
+        }
+      trace_printf("\"%s\"", argv[i]);
+    }
+  trace_printf("]);\n");
+}
 
 // ----------------------------------------------------------------------------
 
-#endif // BLINKLED_H_
+#endif // TRACE

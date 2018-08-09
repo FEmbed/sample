@@ -36,7 +36,7 @@
 
 // ----------------------------------------------------------------------------
 //
-// Standalone STM32F0 led blink sample (trace via NONE).
+// Standalone STM32F4 led blink sample (trace via DEBUG).
 //
 // In debug configurations, demonstrate how to print a greeting message
 // on the trace device. In release configurations the message is
@@ -46,20 +46,10 @@
 // continuous loop and SysTick delays.
 //
 // Trace support is enabled by adding the TRACE macro definition.
-// By default the trace messages are forwarded to the NONE output,
+// By default the trace messages are forwarded to the DEBUG output,
 // but can be rerouted to any device or completely suppressed, by
 // changing the definitions required in system/src/diag/trace_impl.c
 // (currently OS_USE_TRACE_ITM, OS_USE_TRACE_SEMIHOSTING_DEBUG/_STDOUT).
-//
-// The external clock frequency is specified as a preprocessor definition
-// passed to the compiler via a command line option (see the 'C/C++ General' ->
-// 'Paths and Symbols' -> the 'Symbols' tab, if you want to change it).
-// The value selected during project creation was HSE_VALUE=8000000.
-//
-// Note: The default clock settings take the user defined HSE_VALUE and try
-// to reach the maximum possible system clock. For the default 8 MHz input
-// the result is guaranteed, but for other values it might not be possible,
-// so please adjust the PLL settings in system/src/cmsis/system_stm32f0xx.c
 //
 
 // Definitions visible only within this translation unit.
@@ -72,6 +62,84 @@ namespace
   constexpr Timer::ticks_t BLINK_OFF_TICKS = Timer::FREQUENCY_HZ
       - BLINK_ON_TICKS;
 }
+
+// ----- LED definitions ------------------------------------------------------
+
+#if defined(STM32F401xE)
+
+#warning "Assume a NUCLEO-F401RE board, PA5, active high."
+
+// PA5
+#define BLINK_PORT_NUMBER         (0)
+#define BLINK_PIN_NUMBER          (5)
+#define BLINK_ACTIVE_LOW          (false)
+
+BlinkLed blinkLeds[1] =
+  {
+    { BLINK_PORT_NUMBER, BLINK_PIN_NUMBER, BLINK_ACTIVE_LOW },
+  };
+
+#elif defined(STM32F407xx)
+
+#warning "Assume a STM32F4-Discovery board, PD12-PD15, active high."
+
+#define BLINK_PORT_NUMBER         (3)
+#define BLINK_PIN_NUMBER_GREEN    (12)
+#define BLINK_PIN_NUMBER_ORANGE   (13)
+#define BLINK_PIN_NUMBER_RED      (14)
+#define BLINK_PIN_NUMBER_BLUE     (15)
+#define BLINK_ACTIVE_LOW          (false)
+
+BlinkLed blinkLeds[4] =
+  {
+    { BLINK_PORT_NUMBER, BLINK_PIN_NUMBER_GREEN, BLINK_ACTIVE_LOW },
+    { BLINK_PORT_NUMBER, BLINK_PIN_NUMBER_ORANGE, BLINK_ACTIVE_LOW },
+    { BLINK_PORT_NUMBER, BLINK_PIN_NUMBER_RED, BLINK_ACTIVE_LOW },
+    { BLINK_PORT_NUMBER, BLINK_PIN_NUMBER_BLUE, BLINK_ACTIVE_LOW },
+  };
+
+#elif defined(STM32F411xE)
+
+#warning "Assume a NUCLEO-F411RE board, PA5, active high."
+
+#define BLINK_PORT_NUMBER         (0)
+#define BLINK_PIN_NUMBER          (5)
+#define BLINK_ACTIVE_LOW          (false)
+
+BlinkLed blinkLeds[1] =
+  {
+    { BLINK_PORT_NUMBER, BLINK_PIN_NUMBER, BLINK_ACTIVE_LOW },
+  };
+
+#elif defined(STM32F429xx)
+
+#warning "Assume a STM32F429I-Discovery board, PG13-PG14, active high."
+
+#define BLINK_PORT_NUMBER         (6)
+#define BLINK_PIN_NUMBER_GREEN    (13)
+#define BLINK_PIN_NUMBER_RED      (14)
+#define BLINK_ACTIVE_LOW          (false)
+
+BlinkLed blinkLeds[2] =
+  {
+    { BLINK_PORT_NUMBER, BLINK_PIN_NUMBER_GREEN, BLINK_ACTIVE_LOW },
+    { BLINK_PORT_NUMBER, BLINK_PIN_NUMBER_RED, BLINK_ACTIVE_LOW },
+  };
+
+#else
+
+#warning "Unknown board, assume PA5, active high."
+
+#define BLINK_PORT_NUMBER         (0)
+#define BLINK_PIN_NUMBER          (5)
+#define BLINK_ACTIVE_LOW          (false)
+
+BlinkLed blinkLeds[1] =
+  {
+    { BLINK_PORT_NUMBER, BLINK_PIN_NUMBER, BLINK_ACTIVE_LOW },
+  };
+
+#endif
 
 // ----- main() ---------------------------------------------------------------
 
@@ -93,30 +161,83 @@ main(int argc, char* argv[])
   trace_printf("System clock: %u Hz\n", SystemCoreClock);
 
   Timer timer;
-  timer.start();
+  timer.start ();
 
-  BlinkLed blinkLed;
-
-  // Perform all necessary initialisations for the LED.
-  blinkLed.powerUp();
+  // Perform all necessary initialisations for the LEDs.
+  for (size_t i = 0; i < (sizeof(blinkLeds) / sizeof(blinkLeds[0])); ++i)
+    {
+      blinkLeds[i].powerUp ();
+    }
 
   uint32_t seconds = 0;
 
-  // Infinite loop
-  while (1)
+  for (size_t i = 0; i < (sizeof(blinkLeds) / sizeof(blinkLeds[0])); ++i)
     {
-      blinkLed.turnOn();
-      timer.sleep(seconds== 0 ? Timer::FREQUENCY_HZ : BLINK_ON_TICKS);
-
-      blinkLed.turnOff();
-      timer.sleep(BLINK_OFF_TICKS);
-
-      ++seconds;
-
-      // Count seconds on the trace device.
-      trace_printf("Second %u\n", seconds);
+      blinkLeds[i].turnOn ();
     }
-  // Infinite loop, never return.
+
+  // First second is long.
+  timer.sleep (Timer::FREQUENCY_HZ);
+
+  for (size_t i = 0; i < (sizeof(blinkLeds) / sizeof(blinkLeds[0])); ++i)
+    {
+      blinkLeds[i].turnOff ();
+    }
+
+  timer.sleep (BLINK_OFF_TICKS);
+
+  ++seconds;
+  trace_printf ("Second %u\n", seconds);
+
+  if ((sizeof(blinkLeds) / sizeof(blinkLeds[0])) > 1)
+    {
+      // Blink individual LEDs.
+      for (size_t i = 0; i < (sizeof(blinkLeds) / sizeof(blinkLeds[0])); ++i)
+        {
+          blinkLeds[i].turnOn ();
+          timer.sleep (BLINK_ON_TICKS);
+
+          blinkLeds[i].turnOff ();
+          timer.sleep (BLINK_OFF_TICKS);
+
+          ++seconds;
+          trace_printf ("Second %u\n", seconds);
+        }
+
+      // Blink binary.
+      while (1)
+        {
+          for (size_t l = 0; l < (sizeof(blinkLeds) / sizeof(blinkLeds[0]));
+              ++l)
+            {
+              blinkLeds[l].toggle ();
+              if (blinkLeds[l].isOn ())
+                {
+                  break;
+                }
+            }
+          timer.sleep (Timer::FREQUENCY_HZ);
+
+          ++seconds;
+          trace_printf ("Second %u\n", seconds);
+        }
+      // Infinite loop, never return.
+    }
+  else
+    {
+      while (1)
+        {
+          blinkLeds[0].turnOn ();
+          timer.sleep (BLINK_ON_TICKS);
+
+          blinkLeds[0].turnOff ();
+          timer.sleep (BLINK_OFF_TICKS);
+
+          ++seconds;
+          trace_printf ("Second %u\n", seconds);
+        }
+      // Infinite loop, never return.
+    }
 }
 
 #pragma GCC diagnostic pop

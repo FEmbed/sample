@@ -25,43 +25,57 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef BLINKLED_H_
-#define BLINKLED_H_
+// ----------------------------------------------------------------------------
+
+#include <stdlib.h>
+#include "diag/Trace.h"
 
 // ----------------------------------------------------------------------------
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpadded"
+#if !defined(DEBUG)
+extern void
+__attribute__((noreturn))
+__reset_hardware(void);
+#endif
 
-class BlinkLed
+// ----------------------------------------------------------------------------
+
+// Forward declaration
+
+void
+_exit(int code);
+
+// ----------------------------------------------------------------------------
+
+// On Release, call the hardware reset procedure.
+// On Debug we just enter an infinite loop, to be used as landmark when halting
+// the debugger.
+//
+// It can be redefined in the application, if more functionality
+// is required.
+
+void
+__attribute__((weak))
+_exit(int code __attribute__((unused)))
 {
-public:
-  BlinkLed (unsigned int port, unsigned int bit, bool active_low);
+#if !defined(DEBUG)
+  __reset_hardware();
+#endif
 
-  void
-  powerUp ();
-
-  void
-  turnOn ();
-
-  void
-  turnOff ();
-
-  void
-  toggle ();
-
-  bool
-  isOn ();
-
-private:
-  unsigned int fPortNumber;
-  unsigned int fBitNumber;
-  unsigned int fBitMask;
-  bool fIsActiveLow;
-};
-
-#pragma GCC diagnostic pop
+  // TODO: write on trace
+  while (1)
+    ;
+}
 
 // ----------------------------------------------------------------------------
 
-#endif // BLINKLED_H_
+void
+__attribute__((weak,noreturn))
+abort(void)
+{
+  trace_puts("abort(), exiting...");
+
+  _exit(1);
+}
+
+// ----------------------------------------------------------------------------

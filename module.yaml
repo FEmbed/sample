@@ -15,7 +15,7 @@ common:
     - -Wlogical-op
     - -Waggregate-return
     - -Wfloat-equal
-    - -g3 
+    - -g3
     - -fstack-usage
     macros:
     - STM32F407xx
@@ -30,14 +30,21 @@ cxx:
 linker:
     flags:
     - --gc-sections
+files:
+    includes:
+        user:
+        - include
+        system:
+        - system/include
 properties:
     mcu: cortex-m4
     toolchain: gcc_arm
+    vendor: ST
+    chip_series: STM32F4xx
 required:
     feOSLib:
         favors:
             mcu: ${mcu}
             toolchain: ${toolchain}
-    feSFUD:
     feCMSIS:
     feHAL:

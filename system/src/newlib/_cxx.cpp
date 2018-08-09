@@ -25,35 +25,48 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/*
- * Memory Spaces Definitions.
- *
- * Need modifying for a specific board. 
- *   FLASH.ORIGIN: starting address of flash
- *   FLASH.LENGTH: length of flash
- *   RAM.ORIGIN: starting address of RAM bank 0
- *   RAM.LENGTH: length of RAM bank 0
- *
- * The values below can be addressed in further linker scripts
- * using functions like 'ORIGIN(RAM)' or 'LENGTH(RAM)'.
- */
+// ----------------------------------------------------------------------------
 
-MEMORY
+// These functions are redefined locally, to avoid references to some
+// heavy implementations in the standard C++ library.
+
+// ----------------------------------------------------------------------------
+
+#include <cstdlib>
+#include <sys/types.h>
+#include "diag/Trace.h"
+
+// ----------------------------------------------------------------------------
+
+namespace __gnu_cxx
 {
-  RAM (xrw) : ORIGIN = 0x20000000, LENGTH = 8K
-  CCMRAM (xrw) : ORIGIN = 0x00000000, LENGTH = 0
-  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 64K
-  FLASHB1 (rx) : ORIGIN = 0x00000000, LENGTH = 0
-  EXTMEMB0 (rx) : ORIGIN = 0x00000000, LENGTH = 0
-  EXTMEMB1 (rx) : ORIGIN = 0x00000000, LENGTH = 0
-  EXTMEMB2 (rx) : ORIGIN = 0x00000000, LENGTH = 0
-  EXTMEMB3 (rx) : ORIGIN = 0x00000000, LENGTH = 0
-  MEMORY_ARRAY (xrw)  : ORIGIN = 0x00000000, LENGTH = 0
+  void
+  __attribute__((noreturn))
+  __verbose_terminate_handler();
+
+  void
+  __verbose_terminate_handler()
+  {
+    trace_puts(__func__);
+    abort();
+  }
 }
 
-/*
- * For external ram use something like:
+// ----------------------------------------------------------------------------
 
-  RAM (xrw) : ORIGIN = 0x68000000, LENGTH = 8K
+extern "C"
+{
+  void
+  __attribute__((noreturn))
+  __cxa_pure_virtual();
 
- */
+  void
+  __cxa_pure_virtual()
+  {
+    trace_puts(__func__);
+    abort();
+  }
+}
+
+// ----------------------------------------------------------------------------
+

@@ -25,43 +25,63 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef BLINKLED_H_
-#define BLINKLED_H_
+// ----------------------------------------------------------------------------
+
+#include <sys/types.h>
+#include <errno.h>
 
 // ----------------------------------------------------------------------------
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpadded"
+caddr_t
+_sbrk(int incr);
 
-class BlinkLed
+// ----------------------------------------------------------------------------
+
+// The definitions used here should be kept in sync with the
+// stack definitions in the linker script.
+
+caddr_t
+_sbrk(int incr)
 {
-public:
-  BlinkLed (unsigned int port, unsigned int bit, bool active_low);
+  extern char _Heap_Begin; // Defined by the linker.
+  extern char _Heap_Limit; // Defined by the linker.
 
-  void
-  powerUp ();
+  static char* current_heap_end;
+  char* current_block_address;
 
-  void
-  turnOn ();
+  if (current_heap_end == 0)
+    {
+      current_heap_end = &_Heap_Begin;
+    }
 
-  void
-  turnOff ();
+  current_block_address = current_heap_end;
 
-  void
-  toggle ();
+  // Need to align heap to word boundary, else will get
+  // hard faults on Cortex-M0. So we assume that heap starts on
+  // word boundary, hence make sure we always add a multiple of
+  // 4 to it.
+  incr = (incr + 3) & (~3); // align value to 4
+  if (current_heap_end + incr > &_Heap_Limit)
+    {
+      // Some of the libstdc++-v3 tests rely upon detecting
+      // out of memory errors, so do not abort here.
+#if 0
+      extern void abort (void);
 
-  bool
-  isOn ();
+      _write (1, "_sbrk: Heap and stack collision\n", 32);
 
-private:
-  unsigned int fPortNumber;
-  unsigned int fBitNumber;
-  unsigned int fBitMask;
-  bool fIsActiveLow;
-};
+      abort ();
+#else
+      // Heap has overflowed
+      errno = ENOMEM;
+      return (caddr_t) - 1;
+#endif
+    }
 
-#pragma GCC diagnostic pop
+  current_heap_end += incr;
+
+  return (caddr_t) current_block_address;
+}
 
 // ----------------------------------------------------------------------------
 
-#endif // BLINKLED_H_
