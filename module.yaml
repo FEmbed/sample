@@ -18,7 +18,6 @@ common:
     - -Wfloat-equal
     - -g3
     - -fstack-usage
-    - -ffreestanding
     macros:
     - DEBUG
     - USE_FULL_ASSERT
@@ -37,6 +36,8 @@ cxx:
 linker:
     flags:
     - -Xlinker --gc-sections
+    - --specs=nano.specs
+    - -Xlinker --print-map
     search_paths:
     - ldscripts
     script_files:
@@ -49,6 +50,15 @@ files:
         - include
         system:
         - system/include
+    sources:
+        src:
+        - src
+        system:
+        - system/src/cmsis
+        - system/src/cortexm
+        - system/src/diag
+        - system/src/newlib
+        
 properties:
     mcu: cortex-m4
     toolchain: gcc_arm
