@@ -1,0 +1,43 @@
+common:
+    flags:
+    - -mcpu=${mcu}
+    - -mthumb
+    - -mfloat-abi=hard
+    - -mfpu=fpv4-sp-d16
+    - -mno-unaligned-access
+    - -Og 
+    - -fmessage-length=0 
+    - -fsigned-char 
+    - -ffunction-sections
+    - -fdata-sections 
+    - -Wall
+    - -Wextra
+    - -Wlogical-op
+    - -Waggregate-return
+    - -Wfloat-equal
+    - -g3 
+    - -fstack-usage
+    macros:
+    - STM32F407xx
+    - USE_HAL_DRIVER
+cxx:
+    flags:
+    - -Wabi
+    - -fno-exceptions
+    - -fno-rtti
+    - -fno-use-cxa-atexit
+    - -fno-threadsafe-statics
+linker:
+    flags:
+    - --gc-sections
+properties:
+    mcu: cortex-m4
+    toolchain: gcc_arm
+required:
+    feOSLib:
+        favors:
+            mcu: ${mcu}
+            toolchain: ${toolchain}
+    feSFUD:
+    feCMSIS:
+    feHAL:
