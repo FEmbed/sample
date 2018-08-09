@@ -34,7 +34,7 @@
 #include "Timer.h"
 #include "BlinkLed.h"
 
-#include "cmsis_os.h"
+//#include "cmsis_os.h"
 // ----------------------------------------------------------------------------
 //
 // Standalone STM32F4 led blink sample (trace via DEBUG).
@@ -240,7 +240,7 @@ main(int argc, char* argv[])
       // Infinite loop, never return.
     }
 
-  osKernelStart(NULL, NULL);
+  //osKernelStart(NULL, NULL);
 }
 
 #pragma GCC diagnostic pop

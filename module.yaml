@@ -13,7 +13,8 @@ common:
     - -fdata-sections 
     - -Wall
     - -Wextra
-    - -Wlogical-op
+    - -ffreestanding 
+    - -fno-move-loop-invariants
     - -Waggregate-return
     - -Wfloat-equal
     - -g3
@@ -37,7 +38,6 @@ linker:
     flags:
     - -Xlinker --gc-sections
     - --specs=nano.specs
-    - -Xlinker --print-map
     search_paths:
     - ldscripts
     script_files:
